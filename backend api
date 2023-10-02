@@ -1,0 +1,110 @@
+from sqlalchemy import Table, Column, ForeignKey
+from sqlalchemy.orm import relationship
+from sqlalchemy.sql.sqltypes import Integer, LargeBinary, String, Boolean
+from pydantic import BaseModel
+from fastapi import APIRouter, FastAPI, HTTPException, status, Query, Request, responses, File, UploadFile
+from fastapi.middleware.cors import CORSMiddleware
+from sqlalchemy import create_engine, MetaData
+from sqlalchemy.sql import select
+import urllib.parse 
+import json
+import base64
+from typing import List, Optional
+import psycopg2
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import Session
+from sqlalchemy.dialects.postgresql import ARRAY
+import os
+import time
+import fastapi
+from datetime import datetime
+import smtplib
+import dkim
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
+from email.mime.base import MIMEBase
+from sqlalchemy.sql import text
+
+Base = declarative_base()
+engine = create_engine("postgresql+psycopg2://postgres:%s@127.0.0.1:5432/test_app" % urllib.parse.quote('Keijiro@1030'))
+metadata = MetaData()
+conn = engine.connect()
+user = APIRouter()
+metadata.create_all(engine)
+session = Session(bind = engine)
+
+app = FastAPI()
+
+class BaseUser(Base):
+    __tablename__ = "users"
+    user_id = Column(Integer, primary_key = True)
+    username = Column(String)
+    time = Column(String)
+    
+class User(BaseModel):
+    username: Optional[str] = None
+    user_id: Optional[str] = None
+    time: Optional[str] = None
+
+users = Table('users', metadata,
+    Column('username', String),
+    Column('user_id', Integer, primary_key = True),
+    Column('time', String)    
+    )
+
+session = Session(bind=engine)
+
+
+@app.get('/connect')
+def confirm_connection():
+    return {'Message':'Connected...'}
+
+
+
+@app.get('/check-email')
+def check_email(username: str):
+    got_user = None
+    check_user = conn.execute(users.select().where(users.c.email  == username)).fetchone()
+    if check_user != None:
+        got_user = check_user['email']
+        if got_user == username:
+            return {"User": "Exists"}
+    else:
+        return {"User": "Registered Successfully"}
+
+
+
+@app.get('/get-events')
+def get_events():
+    query = text('SELECT username, user_id, time FROM users')  # Specify the columns you want
+    result = conn.execute(query).fetchall()
+    
+    if result:
+        users_list = [{"username": row[0], "user_id": row[1], "time": row[2]} for row in result]
+        return {"Users": users_list}
+    else:
+        return {"Users": []}
+
+
+@app.post('/add-user')
+async def add_event(input_user: User):
+    add_data = BaseUser(username = input_user.username, time = input_user.time)
+    session.add(add_data)
+    session.commit()
+    return add_data
+
+
+
+@app.put('/update-time/{unique_id}')
+def update_time(unique_id: str, input_id: User):
+    conn.execute(users.update().values(username = input_id.username, time = input_id.time).where(users.c.time == unique_id))
+    conn.commit()
+    return {'Status' : 'Success'}
+
+
+@app.delete('/delete-event-record/{user}')
+async def delete_event_record(user: str):
+    delete_user = urllib.parse.unquote(user)
+    conn.execute(users.delete().where(users.c.time == user))
+    conn.commit()
+    return {'Status' : 'Success'}
