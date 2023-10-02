@@ -20,9 +20,9 @@ import 'create_account.dart';
 
 class CreateEvent extends StatefulWidget {
   final name;
-  final id;
+  final timeList;
   final time;
-  CreateEvent({this.name, this.time, this.id});
+  CreateEvent({this.name, this.time, this.timeList});
   
   @override
   _CreateEventState createState() => _CreateEventState();
@@ -156,8 +156,8 @@ TextEditingController timeController = TextEditingController();
 
                         Container(height: MediaQuery.of(context).size.height * .05, alignment: Alignment.center,
                           child: GestureDetector(onTap: () async {
-
-                            if (int.parse(timeController.text) > 759 && int.parse(timeController.text) < 2000) {  
+                            //check if the event will be a duplcate of existing time
+                            if (!widget.timeList.contains(timeController.text)) {if (int.parse(timeController.text) > 759 && int.parse(timeController.text) < 2000) {  
                                 await registerUser(event: nameController.text, time: timeController.text);
                                 Navigator.push(context, PageRouteBuilder(pageBuilder: (context, animation, secondaryAnimation) 
                                   => HomeScreen() ,transitionDuration: Duration(milliseconds: 10), transitionsBuilder: (context, animation, secondaryAnimation, child) {
@@ -169,7 +169,7 @@ TextEditingController timeController = TextEditingController();
                                     return SlideTransition(
                                       position: offsetAnimation,
                                       child: child,);
-                                    }));
+                                    }));}
                             }
                             else {
                               setState(() {
