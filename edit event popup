@@ -1,0 +1,187 @@
+
+//Editing events popup
+import 'dart:async';
+import 'dart:convert';
+import 'dart:ui';
+
+import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:path/path.dart' as path;
+
+import 'package:http/http.dart' as http;
+import 'package:sqflite/sqflite.dart';
+import 'package:sqflite/sqlite_api.dart';
+
+import 'create_account.dart';
+
+
+class EditEvent extends StatefulWidget {
+  final name;
+  final id;
+  final time;
+  EditEvent({this.name, this.time, this.id});
+  
+  @override
+  _EditEventState createState() => _EditEventState();
+
+}
+
+class _EditEventState extends State<EditEvent> {
+
+  final _channel = MethodChannel("/startBackgroundService");
+
+  bool blockList = true;
+  
+
+
+  var firstName = '';
+  var lastName = '';
+  checkName() {
+    if (widget.name.contains(' ')) {
+      setState(() {firstName = widget.name.substring(0, widget.name.indexOf(' '));
+      lastName = widget.name.substring(widget.name.indexOf(' '), widget.name.length);
+      });
+    }
+    else {
+      setState(() {
+        firstName = widget.name;
+        lastName = '';
+      });
+    }
+  }
+  @override
+  void initState() {
+    super.initState(); 
+    checkName();
+    
+  }
+
+
+  
+
+  List languageFamily = [
+      'Roboto', 
+      'NotoSansSC', 
+      'NotoSansBengali', 
+      'Roboto',
+      'NotoSansArabic', 
+      'NotoSansBengali',
+      'Roboto',
+      'Roboto',
+      'Roboto',
+      'NotoSansArabic',
+      'Roboto',
+      'Roboto',
+      'NotoSansJP',
+      'NotoSansBengali',
+      'NotoSansTelugu',
+      'Roboto',
+      'NotoSansTamil',
+      'Roboto',
+      'Roboto',
+      'SpoqaHanSans',
+      'NotoSansArabic'
+    ];
+
+
+  String event = 'Play golf';
+  String time = '8:00am';
+TextEditingController nameController = TextEditingController();
+  _enterUser() {
+    return Container(color: Colors.white,
+      height: MediaQuery.of(context).size.height * .038, width: MediaQuery.of(context).size.width * .78, child: Material(
+      child: TextField(
+        
+        //autofocus: true,    
+        //maxLength: 2, 
+        cursorColor: Colors.black,
+        controller: nameController,
+        style: TextStyle(
+          fontFamily: languageFamily[0], letterSpacing: -.8, fontSize: MediaQuery.of(context).size.height * .025),
+          decoration: InputDecoration(counterText: "", isDense: true, errorMaxLines: 2, 
+          contentPadding: EdgeInsets.only(left: 1, right: 1, top: 3, bottom: 3),hintText: 'Name',
+          fillColor: Colors.white, filled: true, hintStyle: TextStyle(fontFamily: languageFamily[0], letterSpacing: -.8, fontSize: MediaQuery.of(context).size.height * .025), 
+      focusedBorder: UnderlineInputBorder(borderSide: BorderSide(color: Colors.white, width: .3)),
+      enabledBorder: UnderlineInputBorder(borderSide: BorderSide(color: Colors.white))))));
+  }
+TextEditingController timeController = TextEditingController();
+  _enterTime() {
+    return Container(color: Colors.white,
+      height: MediaQuery.of(context).size.height * .038, width: MediaQuery.of(context).size.width * .78, child: Material(
+      child: TextField(
+        
+        //autofocus: true,    
+        //maxLength: 2, 
+        keyboardType: TextInputType.number, cursorColor: Colors.black,
+        inputFormatters: [FilteringTextInputFormatter.digitsOnly], controller: timeController,
+        style: TextStyle(
+          fontFamily: languageFamily[0], letterSpacing: -.8, fontSize: MediaQuery.of(context).size.height * .025),
+          decoration: InputDecoration(counterText: "", isDense: true, errorMaxLines: 2, 
+          contentPadding: EdgeInsets.only(left: 1, right: 1, top: 3, bottom: 3), hintText: 'Time',
+          fillColor: Colors.white, filled: true, hintStyle: TextStyle(fontFamily: languageFamily[0], letterSpacing: -.8, fontSize: MediaQuery.of(context).size.height * .025), 
+      focusedBorder: UnderlineInputBorder(borderSide: BorderSide(color: Colors.white, width: .3)),
+      enabledBorder: UnderlineInputBorder(borderSide: BorderSide(color: Colors.white))))));
+  }
+
+  
+  Future updateEvent() async {
+    final url = Uri.parse('http://54.180.136.44:8080/update-time/' + widget.time.toString());
+    final response = await http.put(url, headers: <String, String> {'Content-Type': 'application/json; charset=UTF-8'},
+                                     body: jsonEncode(<String, String> {'username': nameController.text.toString(), 'time' : timeController.text}));
+    //update username in local db too
+    return response;
+  }     
+
+  
+
+  @override
+  Widget build(BuildContext context) {
+    
+
+    return GestureDetector(onTap: () {
+      Navigator.pop(context);
+    },
+      child: AlertDialog(backgroundColor: Colors.transparent, elevation: 0,
+        content: Container(color: Colors.transparent,
+          height: MediaQuery.of(context).size.height * .3, width: MediaQuery.of(context).size.width * .8,
+          child: Container(child: Column(children: [
+            
+          Container(height: MediaQuery.of(context).size.height * .3, width: MediaQuery.of(context).size.width * .8, decoration: BoxDecoration(borderRadius: BorderRadius.all(Radius.circular(MediaQuery.of(context).size.height * .02)), color: Colors.white),
+          child: 
+            
+
+                    Column(children: [
+                        Container(height: MediaQuery.of(context).size.height * .07, alignment: Alignment.center,
+                          child: GestureDetector(onTap: () async {
+                          },
+                            child: Text('Edit', textAlign: TextAlign.left, style: TextStyle(decoration: TextDecoration.none, fontFamily: languageFamily[0], color: Colors.black, fontSize: MediaQuery.of(context).size.height * .023, fontWeight: FontWeight.w400, fontStyle: FontStyle.normal, letterSpacing: -0.7,),))),
+                        _enterUser(),
+                        Container(height: 20),
+                        _enterTime(),
+
+                        GestureDetector(onTap: () async {
+                          await updateEvent();
+                           Navigator.push(context, PageRouteBuilder(pageBuilder: (context, animation, secondaryAnimation) 
+                            => HomeScreen() ,transitionDuration: Duration(milliseconds: 10), transitionsBuilder: (context, animation, secondaryAnimation, child) {
+                              var begin = Offset(0, 0.0);
+                              var end = Offset(0.0, 0.0);
+                              var tween = Tween(begin: begin, end: end);
+                              var offsetAnimation = animation.drive(tween);
+
+                              return SlideTransition(
+                                position: offsetAnimation,
+                                child: child,);
+                              }));
+                            },
+                          child: Container(height: MediaQuery.of(context).size.height * .1,alignment: Alignment.center,
+                          child: Text('Update Event', textAlign: TextAlign.left, style: TextStyle(decoration: TextDecoration.none, fontFamily: languageFamily[0], color: Colors.blue[500], fontSize: MediaQuery.of(context).size.height * .023, fontWeight: FontWeight.w400, fontStyle: FontStyle.normal, letterSpacing: -0.7,),))),
+                        
+                        
+                      ],)
+                    
+                   
+      ),  
+        ])))
+    ));}
+  }
