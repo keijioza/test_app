@@ -30,16 +30,14 @@ class _HomeScreenState extends State<HomeScreen> {
   
   @override
   void initState() {
-    Timer(Duration(milliseconds: 100), () {
-      setState(() {
-      });
-    });
-
+    
     getAllEvents();   
     super.initState();
   }
   
   var allEvents;
+
+  List timeChecker = [];
 
 Future getAllEvents() async {
     final url = Uri.parse('http://54.180.136.44:8080/get-events');
@@ -48,8 +46,11 @@ Future getAllEvents() async {
     setState(() {
       allEvents = jsonDecodedData['Users'];
     });
-    print(allEvents);
-    print(allEvents.length);
+    //add a list of time to check for time duplication
+    for (var time in jsonDecodedData['Users']) {
+      setState(() {timeChecker.add(time['time']);});
+    }
+
     return jsonDecodedData['Users'];    
 
 }
@@ -83,17 +84,17 @@ Future getAllEvents() async {
     
 
 
-checkEvents(name, time, id) {
+checkEvents(name, time, timeList) {
     return showDialog(context: context, builder: (context) {
       return CreateEvent(
-        name: name, time: time, id: id,);
+        name: name, time: time, timeList: timeChecker,);
     });
   }
 
 editEvents(name, time) {
     return showDialog(context: context, builder: (context) {
       return EditEvent(
-        name: name, time: time);
+        name: name, time: time, timeList: timeChecker);
     });
   }
 
