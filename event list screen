@@ -1,0 +1,186 @@
+import 'dart:async';
+import 'dart:convert';
+import 'dart:ui';
+
+import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:path/path.dart' as path;
+
+import 'package:http/http.dart' as http;
+import 'package:sqflite/sqflite.dart';
+import 'package:sqflite/sqlite_api.dart';
+
+import 'create_event.dart';
+import 'delete_event_popup.dart';
+import 'edit_event_popup.dart';
+
+
+  
+
+class HomeScreen extends StatefulWidget {
+
+  @override
+  _HomeScreenState createState() => _HomeScreenState();
+
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  
+  
+  @override
+  void initState() {
+    Timer(Duration(milliseconds: 100), () {
+      setState(() {
+      });
+    });
+
+    getAllEvents();   
+    super.initState();
+  }
+  
+  var allEvents;
+
+Future getAllEvents() async {
+    final url = Uri.parse('http://54.180.136.44:8080/get-events');
+    final response = await http.get(url);
+    Map<String, dynamic> jsonDecodedData = jsonDecode(response.body);
+    setState(() {
+      allEvents = jsonDecodedData['Users'];
+    });
+    print(allEvents);
+    print(allEvents.length);
+    return jsonDecodedData['Users'];    
+
+}
+
+  List languageFamily = [
+      'Roboto', 
+      'NotoSansSC', 
+      'NotoSansBengali', 
+      'Roboto',
+      'NotoSansArabic', 
+      'NotoSansBengali',
+      'Roboto',
+      'Roboto',
+      'Roboto',
+      'NotoSansArabic',
+      'Roboto',
+      'Roboto',
+      'NotoSansJP',
+      'NotoSansBengali',
+      'NotoSansTelugu',
+      'Roboto',
+      'NotoSansTamil',
+      'Roboto',
+      'Roboto',
+      'SpoqaHanSans',
+      'NotoSansArabic'
+    ];
+ 
+
+  String username = '';
+    
+
+
+checkEvents(name, time, id) {
+    return showDialog(context: context, builder: (context) {
+      return CreateEvent(
+        name: name, time: time, id: id,);
+    });
+  }
+
+editEvents(name, time) {
+    return showDialog(context: context, builder: (context) {
+      return EditEvent(
+        name: name, time: time);
+    });
+  }
+
+deleteEvents(name, time) {
+    return showDialog(context: context, builder: (context) {
+      return DeleteEvent(
+        name: name, time: time);
+    });
+  }
+
+//widget for the Event/Schedule
+Widget EventContainer(data) {
+
+  String eventTime = data!['time'];
+  String eventName = data['username'] != null ? data['username'] : '';
+  return Container(
+    height: 50,
+    child: Row(children: [
+      Container(height: 50, color: Colors.blue[100], width: MediaQuery.of(context).size.width * .5,
+        child: Text('  ' + eventName.toString(), textAlign: TextAlign.left, style: TextStyle(decoration: TextDecoration.none, fontFamily: languageFamily[0], color: Colors.black, fontSize: MediaQuery.of(context).size.height * .023, fontWeight: FontWeight.w400, fontStyle: FontStyle.normal, letterSpacing: -0.7,),)),
+      Container(height: 50, color: Colors.lightBlueAccent[100], width: MediaQuery.of(context).size.width * .2, alignment: Alignment.topCenter,
+        child: Text(eventTime.toString().substring(0, 2) + ':' + eventTime.toString().substring(2, 4), textAlign: TextAlign.left, style: TextStyle(decoration: TextDecoration.none, fontFamily: languageFamily[0], color: Colors.black, fontSize: MediaQuery.of(context).size.height * .023, fontWeight: FontWeight.w400, fontStyle: FontStyle.normal, letterSpacing: -0.7,),)),
+      
+      
+      GestureDetector(onTap: () {
+        editEvents(eventName, eventTime);
+      },
+        child: Container(height: 50, color: Colors.grey[300], width: MediaQuery.of(context).size.width * .1,
+          child: Text('Edit', textAlign: TextAlign.left, style: TextStyle(decoration: TextDecoration.none, fontFamily: languageFamily[0], color: Colors.black, fontSize: MediaQuery.of(context).size.height * .023, fontWeight: FontWeight.w400, fontStyle: FontStyle.normal, letterSpacing: -0.7,),))),
+      
+      
+      GestureDetector(onTap: () {
+        deleteEvents(eventName, eventTime);
+      },
+        child: Container(height: 50, color: Colors.grey[200], width: MediaQuery.of(context).size.width * .13,
+          child: Text('Delete', textAlign: TextAlign.left, style: TextStyle(decoration: TextDecoration.none, fontFamily: languageFamily[0], color: Colors.red, fontSize: MediaQuery.of(context).size.height * .023, fontWeight: FontWeight.w400, fontStyle: FontStyle.normal, letterSpacing: -0.7,),))),
+      
+    ]));
+  
+}
+
+  @override
+  Widget build(BuildContext context)
+
+  {
+     SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle.dark.copyWith(
+      statusBarColor: Color(0xfff9f9f9), // Color for Android
+      statusBarBrightness: Brightness.dark,
+      statusBarIconBrightness: Brightness.dark,
+      systemNavigationBarColor: Color(0xfff9f9f9),
+      systemNavigationBarIconBrightness: Brightness.dark
+
+      //statusBarBrightness: Brightness.light // Dark == white status bar -- for IOS.
+      
+     ));
+
+    return SafeArea(child: Scaffold(
+      //resizeToAvoidBottomInset: true,
+      body: GestureDetector(onTap: () {},
+      
+        child:  SingleChildScrollView(child: Column(children: [
+          Container(height: MediaQuery.of(context).size.height * .1, width: MediaQuery.of(context).size.width, alignment: Alignment.center,
+            child: Text('Events', textAlign: TextAlign.left, style: TextStyle(decoration: TextDecoration.none, fontFamily: languageFamily[0], color: Colors.black, fontSize: MediaQuery.of(context).size.height * .023, fontWeight: FontWeight.w400, fontStyle: FontStyle.normal, letterSpacing: -0.7,),)),
+         
+          GestureDetector(onTap: () {
+              checkEvents('', '', '');
+          },
+            child: Container(height: 50, color: Colors.grey[200], width: MediaQuery.of(context).size.width, alignment: Alignment.centerLeft,
+             child: Text('    Create Event', textAlign: TextAlign.left, style: TextStyle(decoration: TextDecoration.none, fontFamily: languageFamily[0], color: Colors.blue[800], fontSize: MediaQuery.of(context).size.height * .023, fontWeight: FontWeight.w400, fontStyle: FontStyle.normal, letterSpacing: -0.7,),))),
+   
+
+          //This is the builder for the schedules/events
+          Container(height: MediaQuery.of(context).size.height * .8, color: Colors.grey[100],
+            child: allEvents != null ? ListView.builder(
+              itemCount: allEvents.length,
+              itemBuilder: (context, index) {
+              return EventContainer(allEvents[index]);
+            },) : Container()),
+          
+
+          ],))
+      
+      )));
+  
+  
+  }
+  } 
+
+
+
