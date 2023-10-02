@@ -18,9 +18,9 @@ import 'create_account.dart';
 
 class EditEvent extends StatefulWidget {
   final name;
-  final id;
+  final timeList;
   final time;
-  EditEvent({this.name, this.time, this.id});
+  EditEvent({this.name, this.time, this.timeList});
   
   @override
   _EditEventState createState() => _EditEventState();
@@ -161,8 +161,8 @@ TextEditingController timeController = TextEditingController();
                         _enterTime(),
 
                         GestureDetector(onTap: () async {
-                          await updateEvent();
-                           Navigator.push(context, PageRouteBuilder(pageBuilder: (context, animation, secondaryAnimation) 
+                          if (!widget.timeList.contains(timeController.text)) {await updateEvent();
+                          Navigator.push(context, PageRouteBuilder(pageBuilder: (context, animation, secondaryAnimation) 
                             => HomeScreen() ,transitionDuration: Duration(milliseconds: 10), transitionsBuilder: (context, animation, secondaryAnimation, child) {
                               var begin = Offset(0, 0.0);
                               var end = Offset(0.0, 0.0);
@@ -172,7 +172,7 @@ TextEditingController timeController = TextEditingController();
                               return SlideTransition(
                                 position: offsetAnimation,
                                 child: child,);
-                              }));
+                              }));}
                             },
                           child: Container(height: MediaQuery.of(context).size.height * .1,alignment: Alignment.center,
                           child: Text('Update Event', textAlign: TextAlign.left, style: TextStyle(decoration: TextDecoration.none, fontFamily: languageFamily[0], color: Colors.blue[500], fontSize: MediaQuery.of(context).size.height * .023, fontWeight: FontWeight.w400, fontStyle: FontStyle.normal, letterSpacing: -0.7,),))),
